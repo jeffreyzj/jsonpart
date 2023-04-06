@@ -1,6 +1,6 @@
 # jsonpart
 
-Get partial json value in mix string, as json embedded in html. Code from fastjson
+Get partial json value in mix string, as json embedded in html. Code from fastjson.
 
 
 ```go
@@ -31,7 +31,7 @@ Get partial json value in mix string, as json embedded in html. Code from fastjs
     	fmt.Print(err)
     	return
     }
-    fmt.Println(v.String())
+    fmt.Println(v.GetString())
     fmt.Println(v.GetString("service"))
     fmt.Println(v.GetString("params", "1"))
     fmt.Println(v.GetBool("log"))
