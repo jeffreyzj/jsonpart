@@ -13,14 +13,28 @@ import (
 )
 
 // Parse s contain json string embedded in, get partial value by specified key
-// full s json will be parse if partialKey is ""
-func Parse(s string, partialKey string) (*Value, error) {
+// full s json will be parse if partialKey is empty or ""
+func Parse(s string, partialKey ...string) (*Value, error) {
+	// find partialKey
+	if len(partialKey) > 0 && len(partialKey[0]) > 0 {
+		i := strings.Index(s, fmt.Sprintf("\"%s\"", partialKey[0]))
+		if i == -1 {
+			return nil, fmt.Errorf("cannot find partialKey: \"%s\"; JSON: %q", partialKey[0], startEndString(s))
+		}
+		s = s[i:]
+		v := s[len(partialKey[0])+2:]
+		v = skipWS(v)
+		if v[0] != ':' {
+			return nil, fmt.Errorf("invalid partialKey: \"%s\"; JSON: %q", partialKey[0], startEndString(s))
+		}
+		s = v[1:]
+	}
 	p := &parser{}
-	return p.parse(s, partialKey)
+	return p.parse(s)
 }
 
-func ParseBytes(b []byte, partialKey string) (*Value, error) {
-	return Parse(b2s(b), partialKey)
+func ParseBytes(b []byte, partialKey ...string) (*Value, error) {
+	return Parse(b2s(b), partialKey...)
 }
 
 // parser parses JSON.
@@ -37,21 +51,7 @@ type parser struct {
 	c cache
 }
 
-func (p *parser) parse(s string, partialKey string) (*Value, error) {
-	// find partialKey
-	if len(partialKey) > 0 {
-		i := strings.Index(s, fmt.Sprintf("\"%s\"", partialKey))
-		if i == -1 {
-			return nil, fmt.Errorf("cannot find partialKey: \"%s\"; JSON: %q", partialKey, startEndString(s))
-		}
-		s = s[i:]
-		v := s[len(partialKey)+2:]
-		v = skipWS(v)
-		if v[0] != ':' {
-			return nil, fmt.Errorf("invalid partialKey: \"%s\"; JSON: %q", partialKey, startEndString(s))
-		}
-		s = v[1:]
-	}
+func (p *parser) parse(s string) (*Value, error) {
 	s = skipWS(s)
 	p.b = append(p.b[:0], s...)
 	p.c.reset()

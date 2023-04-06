@@ -37,3 +37,29 @@ Get partial json value in mix string, as json embedded in html. Code from fastjs
     fmt.Println(v.GetBool("log"))
     fmt.Println(v.GetInt("num"))
 ```
+
+Get full json value
+
+```go
+    s := `{
+            "test": {
+              "head": "show",
+              "value": 18,
+              "ctx": {
+                "service": "feekback",
+                "params": ["a", "b", "c"],
+                "log": true,
+                "num": 10
+              }
+            }
+          }`
+    v, err := jsonpart.Parse(s)
+    if err != nil {
+    	fmt.Print(err)
+    	return
+    }
+    fmt.Println(v.GetString("test", "head"))
+    fmt.Println(v.GetString("test", "ctx","params", "1"))
+    fmt.Println(v.GetBool("test", "ctx","log"))
+    fmt.Println(v.GetInt("test", "value"))
+```
