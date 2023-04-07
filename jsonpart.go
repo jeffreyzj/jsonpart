@@ -524,6 +524,27 @@ func (o *Object) unescapeKeys() {
 	o.keysUnescaped = true
 }
 
+// marshalTo appends marshaled o to dst and returns the result.
+func (o *Object) marshalTo(dst []byte) []byte {
+	dst = append(dst, '{')
+	for i, kv := range o.kvs {
+		if o.keysUnescaped {
+			dst = escapeString(dst, kv.k)
+		} else {
+			dst = append(dst, '"')
+			dst = append(dst, kv.k...)
+			dst = append(dst, '"')
+		}
+		dst = append(dst, ':')
+		dst = kv.v.marshalTo(dst)
+		if i != len(o.kvs)-1 {
+			dst = append(dst, ',')
+		}
+	}
+	dst = append(dst, '}')
+	return dst
+}
+
 // Len returns the number of items in the o.
 func (o *Object) Len() int {
 	return len(o.kvs)
@@ -571,33 +592,12 @@ func (o *Object) Visit(f func(key []byte, v *Value)) {
 	}
 }
 
-// MarshalTo appends marshaled o to dst and returns the result.
-func (o *Object) MarshalTo(dst []byte) []byte {
-	dst = append(dst, '{')
-	for i, kv := range o.kvs {
-		if o.keysUnescaped {
-			dst = escapeString(dst, kv.k)
-		} else {
-			dst = append(dst, '"')
-			dst = append(dst, kv.k...)
-			dst = append(dst, '"')
-		}
-		dst = append(dst, ':')
-		dst = kv.v.MarshalTo(dst)
-		if i != len(o.kvs)-1 {
-			dst = append(dst, ',')
-		}
-	}
-	dst = append(dst, '}')
-	return dst
+func (o *Object) MarshalBytes() []byte {
+	return o.marshalTo(nil)
 }
 
-// String returns string representation for the o.
-//
-// This function is for debugging purposes only. It isn't optimized for speed.
-// See MarshalTo instead.
-func (o *Object) String() string {
-	b := o.MarshalTo(nil)
+func (o *Object) MarshalString() string {
+	b := o.marshalTo(nil)
 	// It is safe converting b to string without allocation, since b is no longer
 	// reachable after this line.
 	return b2s(b)
@@ -625,8 +625,8 @@ func (v *Value) vType() vType {
 	return v.t
 }
 
-// MarshalTo appends marshaled v to dst and returns the result.
-func (v *Value) MarshalTo(dst []byte) []byte {
+// marshalTo appends marshaled v to dst and returns the result.
+func (v *Value) marshalTo(dst []byte) []byte {
 	switch v.t {
 	case typeRawString:
 		dst = append(dst, '"')
@@ -634,11 +634,11 @@ func (v *Value) MarshalTo(dst []byte) []byte {
 		dst = append(dst, '"')
 		return dst
 	case typeObject:
-		return v.o.MarshalTo(dst)
+		return v.o.marshalTo(dst)
 	case typeArray:
 		dst = append(dst, '[')
 		for i, vv := range v.a {
-			dst = vv.MarshalTo(dst)
+			dst = vv.marshalTo(dst)
 			if i != len(v.a)-1 {
 				dst = append(dst, ',')
 			}
@@ -658,20 +658,6 @@ func (v *Value) MarshalTo(dst []byte) []byte {
 	default:
 		panic(fmt.Errorf("BUG: unexpected Value type: %d", v.t))
 	}
-}
-
-// String returns string representation of the v.
-//
-// The function is for debugging purposes only. It isn't optimized for speed.
-// See MarshalTo instead.
-//
-// Don't confuse this function with StringBytes, which must be called
-// for obtaining the underlying JSON string for the v.
-func (v *Value) String() string {
-	b := v.MarshalTo(nil)
-	// It is safe converting b to string without allocation, since b is no longer
-	// reachable after this line.
-	return b2s(b)
 }
 
 // Exists returns true if the field exists for the given keys path.
@@ -853,6 +839,17 @@ func (v *Value) GetBool(keys ...string) bool {
 	return false
 }
 
+func (v *Value) MarshalBytes() []byte {
+	return v.marshalTo(nil)
+}
+
+func (v *Value) MarshalString() string {
+	b := v.marshalTo(nil)
+	// It is safe converting b to string without allocation, since b is no longer
+	// reachable after this line.
+	return b2s(b)
+}
+
 // Object returns the underlying JSON object for the v.
 //
 // The returned object is valid until parse is called on the parser returned v.
@@ -887,6 +884,13 @@ func (v *Value) StringBytes() ([]byte, error) {
 		return nil, fmt.Errorf("value doesn't contain string; it contains %s", v.vType())
 	}
 	return s2b(v.s), nil
+}
+
+func (v *Value) String() (string, error) {
+	if v.vType() != typeString {
+		return "", fmt.Errorf("value doesn't contain string; it contains %s", v.vType())
+	}
+	return v.s, nil
 }
 
 // Float64 returns the underlying JSON number for the v.
