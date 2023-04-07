@@ -31,11 +31,11 @@ Get partial json value in mix string, as json embedded in html. Code from fastjs
     	fmt.Print(err)
     	return
     }
-    fmt.Println(v.GetString())
-    fmt.Println(v.GetString("service"))
-    fmt.Println(v.GetString("params", "1"))
-    fmt.Println(v.GetBool("log"))
-    fmt.Println(v.GetInt("num"))
+	fmt.Println(v.MarshalString()) //output: {"service":"feekback","params":["a","b","c"],"log":true,"num":10}
+	fmt.Println(v.GetString("service")) //output: feekback
+	fmt.Println(v.GetString("params", "1")) //output: b
+	fmt.Println(v.GetBool("log")) //output: true
+	fmt.Println(v.GetInt("num")) //output: 10
 ```
 
 Get full json value
@@ -58,8 +58,8 @@ Get full json value
     	fmt.Print(err)
     	return
     }
-    fmt.Println(v.GetString("test", "head"))
-    fmt.Println(v.GetString("test", "ctx","params", "1"))
-    fmt.Println(v.GetBool("test", "ctx","log"))
-    fmt.Println(v.GetInt("test", "value"))
+	fmt.Println(v.GetString("test", "head")) //output: show
+	fmt.Println(v.GetString("test", "ctx", "params", "1")) //output: b
+	fmt.Println(v.GetBool("test", "ctx", "log")) //output: true
+	fmt.Println(v.GetInt("test", "value")) //output: 18
 ```
