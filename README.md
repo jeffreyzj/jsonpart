@@ -2,6 +2,13 @@
 
 Get partial json value in mix string, as json embedded in html. Code from fastjson.
 
+### Install
+
+```shell
+$ go get -u github.com/jeffreyzj/jsonpart
+```
+
+### Examples
 
 ```go
     s := `<!DOCTYPE html>
