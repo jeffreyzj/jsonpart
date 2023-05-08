@@ -5,7 +5,7 @@ Get partial json value in mix string, as json embedded in html. Code from fastjs
 ### Install
 
 ```shell
-$ go get -u github.com/jeffreyzj/jsonpart
+go get -u github.com/jeffreyzj/jsonpart
 ```
 
 ### Examples
